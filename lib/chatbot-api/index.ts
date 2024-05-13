@@ -57,7 +57,7 @@ export class ChatBotApi extends Construct {
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
     
-    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable.tableName})
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable})
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -81,7 +81,8 @@ export class ChatBotApi extends Construct {
       methods: [apigwv2.HttpMethod.GET,apigwv2.HttpMethod.POST,apigwv2.HttpMethod.DELETE],
       integration: sessionAPIIntegration
     })
-
+    lambdaFunctions.chatFunction.addEnvironment(
+      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "user-sessions")
     // this.wsAPI = websocketBackend.wsAPI;
 
     
