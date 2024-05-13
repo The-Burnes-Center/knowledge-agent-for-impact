@@ -24,6 +24,9 @@ import {TableStack} from "./tables/tables"
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
+
 // import { NagSuppressions } from "cdk-nag";
 
 export interface ChatBotApiProps {
@@ -50,9 +53,11 @@ export class ChatBotApi extends Construct {
     // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
     const tables = new TableStack(this, "TableStack");
+
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
-    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint})
+    
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable.tableName})
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -60,9 +65,23 @@ export class ChatBotApi extends Construct {
     websocketBackend.wsAPI.addRoute('$connect', {
       integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
     });
+    websocketBackend.wsAPI.addRoute('$default', {
+      integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
+    });
     websocketBackend.wsAPI.addRoute('$disconnect', {
       integration: new WebSocketLambdaIntegration('chatbotDisconnectionIntegration', lambdaFunctions.chatFunction),
     });
+    websocketBackend.wsAPI.addRoute('generateEmail', {
+      integration: new WebSocketLambdaIntegration('emailIntegration', lambdaFunctions.chatFunction),
+    });
+
+    const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
+    restBackend.restAPI.addRoutes({
+      path: "/user-sessions",
+      methods: [apigwv2.HttpMethod.GET,apigwv2.HttpMethod.POST,apigwv2.HttpMethod.DELETE],
+      integration: sessionAPIIntegration
+    })
+
     // this.wsAPI = websocketBackend.wsAPI;
 
     

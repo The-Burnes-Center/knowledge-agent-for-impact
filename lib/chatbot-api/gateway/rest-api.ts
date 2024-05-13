@@ -27,6 +27,7 @@ export class RestBackendAPI extends Construct {
     super(scope, id);
     
     const httpApi = new apigwv2.HttpApi(this, 'HTTP-API');
+    this.restAPI = httpApi;
     /*const appSyncLambdaResolver = new lambda.Function(
       this,
       "GraphQLApiHandler",
