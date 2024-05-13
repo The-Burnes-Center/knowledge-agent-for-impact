@@ -9,15 +9,18 @@ import { Construct } from "constructs";
 // import { Shared } from "../shared";
 import { UserPool } from "aws-cdk-lib/aws-cognito";
 import * as appsync from "aws-cdk-lib/aws-appsync";
-import { NagSuppressions } from "cdk-nag";
+import {LambdaFunctionStack} from "../functions/functions"
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+// import { NagSuppressions } from "cdk-nag";
 
 interface WebsocketBackendAPIProps {  
-  readonly userPool: UserPool;
-  readonly api: appsync.GraphqlApi;
+  // readonly userPool: UserPool;
+  // readonly api: appsync.GraphqlApi;
 }
 
 export class WebsocketBackendAPI extends Construct {
-
+  public readonly wsAPI : apigwv2.WebSocketApi;
+  public readonly wsFunction : lambda.Function;
   constructor(
     scope: Construct,
     id: string,
@@ -26,14 +29,18 @@ export class WebsocketBackendAPI extends Construct {
     super(scope, id);
     // Create the main Message Topic acting as a message bus
     const webSocketApi = new apigwv2.WebSocketApi(this, 'mywsapi');
-    new apigwv2.WebSocketStage(this, 'main-stage', {
+    const webSocketApiStage =  new apigwv2.WebSocketStage(this, 'main-stage', {
       webSocketApi,
       stageName: 'prod',
       autoDeploy: true,
-    });
-    function addLambda() {
       
-    }
+    });
+    // function addLambda() {
+    const lambdaFunction = new LambdaFunctionStack(scope, id, {wsApiEndpoint : webSocketApiStage.url})
+
+    this.wsAPI = webSocketApi;
+    this.wsFunction = lambdaFunction.chatFunction;
+    // }
   }
 
 }
