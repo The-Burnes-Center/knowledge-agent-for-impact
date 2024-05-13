@@ -43,7 +43,7 @@ export class ChatBotApi extends Construct {
     // const chatTables = new ChatBotDynamoDBTables(this, "ChatDynamoDBTables");
     // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
-    const api = new WebsocketBackendAPI(this, "wsAPI", {})
+    const api = new WebsocketBackendAPI(this, "WebsocketBackend", {})
     
 
     // const api = new appsync.GraphqlApi(this, "ChatbotApi", {
