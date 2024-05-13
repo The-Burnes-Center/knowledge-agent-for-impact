@@ -74,7 +74,7 @@ export class KendraIndexStack extends cdk.Stack {
     // Create a new Kendra index
     const index = new kendra.CfnIndex(scope, 'KendraIndex', {
       name: 'gen-ai-chatbot-index',
-      roleArn: 'arn:aws:iam::123456789012:role/KendraIndexRole',
+      roleArn: kendraIndexRole.roleArn,
       description: 'Gen AI Chatbot Kendra Index',
       edition: 'DEVELOPER_EDITION',
     });
@@ -100,6 +100,7 @@ export class KendraIndexStack extends cdk.Stack {
       indexId: index.attrId,
       name: 's3-source',
       type: 'S3',
+      roleArn : kendraDataSourceRole.roleArn,
       dataSourceConfiguration: {
         s3Configuration: {
           bucketName: props.s3Bucket.bucketName,
