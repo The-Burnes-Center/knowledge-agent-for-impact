@@ -10,6 +10,7 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 interface LambdaFunctionStackProps {  
   readonly wsApiEndpoint : string;  
   readonly sessionTable : Table;
+  readonly kendraIndexID : string;
 }
 
 export class LambdaFunctionStack extends cdk.Stack {  
@@ -25,7 +26,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment : {
-        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint
+        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint,
+        "INDEX_ID" : props.kendraIndexID
       }
     });
 
@@ -48,7 +50,8 @@ export class LambdaFunctionStack extends cdk.Stack {
         'dynamodb:GetItem',
         'dynamodb:PutItem',
         'dynamodb:UpdateItem',
-        'dynamodb:DeleteItem'
+        'dynamodb:DeleteItem',
+        'dynamodb:Query'
       ],
       resources: [props.sessionTable.tableArn]
     }));

@@ -20,6 +20,8 @@ import {WebsocketBackendAPI} from "./gateway/websocket-api"
 import {RestBackendAPI} from "./gateway/rest-api"
 import {LambdaFunctionStack} from "./functions/functions"
 import {TableStack} from "./tables/tables"
+import {KendraIndexStack} from "./kendra/kendra"
+import {S3BucketStack} from "./buckets/buckets"
 
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -53,11 +55,13 @@ export class ChatBotApi extends Construct {
     // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
     const tables = new TableStack(this, "TableStack");
+    const buckets = new S3BucketStack(this, "BucketStack");
+    const kendra = new KendraIndexStack(this, "KendraStack",{s3Bucket:buckets.kendraBucket});
 
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
     
-    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable})
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable, kendraIndexID : kendra.kendraIndex.attrId})
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -82,7 +86,7 @@ export class ChatBotApi extends Construct {
       integration: sessionAPIIntegration
     })
     lambdaFunctions.chatFunction.addEnvironment(
-      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "user-sessions")
+      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-sessions")
     // this.wsAPI = websocketBackend.wsAPI;
 
     
