@@ -3,6 +3,7 @@ import * as kendra from 'aws-cdk-lib/aws-kendra';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from "constructs";
+import { CrossAccountZoneDelegationRecord } from 'aws-cdk-lib/aws-route53';
 
 export interface KendraIndexStackProps {
   s3Bucket: s3.Bucket
@@ -13,7 +14,7 @@ export class KendraIndexStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: KendraIndexStackProps) {
     super(scope, id);
 
-    const kendraIndexRole = new iam.Role(this, 'KendraIndexRole', {
+    const kendraIndexRole = new iam.Role(scope, 'KendraIndexRole', {
       assumedBy: new iam.ServicePrincipal('kendra.amazonaws.com'),
     });
 
@@ -51,6 +52,9 @@ export class KendraIndexStack extends cdk.Stack {
       })
     );
 
+    console.log(this.region)
+    console.log(this.account)
+
     kendraIndexRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -68,7 +72,7 @@ export class KendraIndexStack extends cdk.Stack {
     );
 
     // Create a new Kendra index
-    const index = new kendra.CfnIndex(this, 'KendraIndex', {
+    const index = new kendra.CfnIndex(scope, 'KendraIndex', {
       name: 'gen-ai-chatbot-index',
       roleArn: 'arn:aws:iam::123456789012:role/KendraIndexRole',
       description: 'Gen AI Chatbot Kendra Index',
@@ -76,7 +80,7 @@ export class KendraIndexStack extends cdk.Stack {
     });
 
 
-    const kendraDataSourceRole = new iam.Role(this, 'KendraDataSourceRole', {
+    const kendraDataSourceRole = new iam.Role(scope, 'KendraDataSourceRole', {
       assumedBy: new iam.ServicePrincipal('kendra.amazonaws.com'),
     });
 
@@ -92,7 +96,7 @@ export class KendraIndexStack extends cdk.Stack {
 
 
     // Use the provided S3 bucket for the data source and FAQ
-    const dataSource = new kendra.CfnDataSource(this, 'KendraS3DataSource', {
+    const dataSource = new kendra.CfnDataSource(scope, 'KendraS3DataSource', {
       indexId: index.attrId,
       name: 's3-source',
       type: 'S3',
