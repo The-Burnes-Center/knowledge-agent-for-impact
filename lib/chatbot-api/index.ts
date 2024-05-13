@@ -50,7 +50,7 @@ export class ChatBotApi extends Construct {
     // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
     const tables = new TableStack(this, "TableStack");
-    const restBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
+    const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
     const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint})
 
