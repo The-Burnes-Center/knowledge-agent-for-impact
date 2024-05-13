@@ -15,7 +15,7 @@ export class LambdaFunctionStack extends cdk.Stack {
     // Define the Lambda function resource
     const websocketAPIFunction = new lambda.Function(this, 'ChatHandler', {
       runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
-      code: lambda.Code.fromAsset('./websocket-chat'), // Points to the lambda directory
+      code: lambda.Code.fromAsset('./websocket-chat/chat.zip'), // Points to the lambda directory
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment : {
         "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint
