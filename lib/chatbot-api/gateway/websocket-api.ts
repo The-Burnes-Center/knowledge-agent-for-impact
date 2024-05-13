@@ -36,7 +36,7 @@ export class WebsocketBackendAPI extends Construct {
       
     });
     // function addLambda() {
-    const lambdaFunction = new LambdaFunctionStack(scope, id, {wsApiEndpoint : webSocketApiStage.url})
+    const lambdaFunction = new LambdaFunctionStack(this, "ChatFunction", {wsApiEndpoint : webSocketApiStage.url})
 
     this.wsAPI = webSocketApi;
     this.wsFunction = lambdaFunction.chatFunction;
