@@ -1,5 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as path from 'path';
+
 // Import Lambda L2 construct
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 
@@ -15,7 +17,7 @@ export class LambdaFunctionStack extends cdk.Stack {
     // Define the Lambda function resource
     const websocketAPIFunction = new lambda.Function(scope, 'ChatHandlerFunction', {
       runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
-      code: lambda.Code.fromAsset('./websocket-chat/chat.zip'), // Points to the lambda directory
+      code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment : {
         "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint
