@@ -24,8 +24,8 @@ export interface ChatBotApiProps {
   // readonly shared: Shared;
   // readonly config: SystemConfig;
   // readonly ragEngines?: RagEngines;
-  readonly userPool: cognito.UserPool;
-  readonly modelsParameter: ssm.StringParameter;
+  // readonly userPool: cognito.UserPool;
+  // readonly modelsParameter: ssm.StringParameter;
   // readonly models: SageMakerModelEndpoint[];
 }
 
