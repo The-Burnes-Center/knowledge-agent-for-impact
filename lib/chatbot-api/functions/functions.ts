@@ -34,7 +34,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, 'session-handler')), // Points to the lambda directory
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
-        "FEEDBACK_TABLE" : props.sessionTable
+        "DDB_TABLE_NAME" : props.sessionTable
       }
     });
 
