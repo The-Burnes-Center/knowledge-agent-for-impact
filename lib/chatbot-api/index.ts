@@ -14,10 +14,16 @@ import { Construct } from "constructs";
 // import { ChatBotS3Buckets } from "./chatbot-s3-buckets";
 // import { ApiResolvers } from "./gateway/rest-api";
 // import { RealtimeGraphqlApiBackend } from "./gateway/websocket-api";
+
+
 import {WebsocketBackendAPI} from "./gateway/websocket-api"
+import {RestBackendAPI} from "./gateway/rest-api"
+import {LambdaFunctionStack} from "./functions/functions"
+import {TableStack} from "./tables/tables"
+
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
-import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
+import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 // import { NagSuppressions } from "cdk-nag";
 
 export interface ChatBotApiProps {
@@ -35,7 +41,7 @@ export class ChatBotApi extends Construct {
   // public readonly byUserIdIndex: string;
   // public readonly filesBucket: s3.Bucket;
   // public readonly userFeedbackBucket: s3.Bucket;
-  public readonly wsAPI: apigwv2.WebSocketApi;
+  // public readonly wsAPI: apigwv2.WebSocketApi;
 
   constructor(scope: Construct, id: string, props: ChatBotApiProps) {
     super(scope, id);
@@ -43,7 +49,23 @@ export class ChatBotApi extends Construct {
     // const chatTables = new ChatBotDynamoDBTables(this, "ChatDynamoDBTables");
     // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
 
-    const api = new WebsocketBackendAPI(this, "WebsocketBackend", {})
+    const tables = new TableStack(this, "TableStack");
+    const restBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
+    const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint})
+
+    websocketBackend.wsAPI.addRoute('getChatbotResponse', {
+      integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
+    });
+    websocketBackend.wsAPI.addRoute('$connect', {
+      integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
+    });
+    websocketBackend.wsAPI.addRoute('$disconnect', {
+      integration: new WebSocketLambdaIntegration('chatbotDisconnectionIntegration', lambdaFunctions.chatFunction),
+    });
+    // this.wsAPI = websocketBackend.wsAPI;
+
+    
     
 
     // const api = new appsync.GraphqlApi(this, "ChatbotApi", {
@@ -100,7 +122,7 @@ export class ChatBotApi extends Construct {
 
     // // Prints out the AppSync GraphQL API key to the terminal
     new cdk.CfnOutput(this, "wsAPI - apiEndpoint", {
-      value: api.wsAPI.apiEndpoint || "",
+      value: websocketBackend.wsAPI.apiEndpoint || "",
     });
 
     // this.messagesTopic = realtimeBackend.messagesTopic;

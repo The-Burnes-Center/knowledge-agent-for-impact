@@ -11,6 +11,8 @@ interface LambdaFunctionStackProps {
 
 export class LambdaFunctionStack extends cdk.Stack {  
   public readonly chatFunction : lambda.Function;
+  public readonly sessionFunction : lambda.Function;
+  
   constructor(scope: Construct, id: string, props: LambdaFunctionStackProps) {
     super(scope, id);
 
