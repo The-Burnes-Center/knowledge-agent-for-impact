@@ -103,6 +103,6 @@ export class KendraIndexStack extends cdk.Stack {
       }
     });
 
-    this.kendraIndex = this.kendraIndex;
+    this.kendraIndex = index;
   }
 }
