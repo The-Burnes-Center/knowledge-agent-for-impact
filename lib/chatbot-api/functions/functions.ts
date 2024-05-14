@@ -113,7 +113,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       actions: [
         's3:*'
       ],
-      resources: [props.feedbackBucket.bucketArn]
+      resources: [props.feedbackBucket.bucketArn,props.feedbackBucket.bucketArn+"/*"]
     }));
 
     this.feedbackFunction = feedbackAPIHandlerFunction;
@@ -132,7 +132,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       actions: [
         's3:*'
       ],
-      resources: [props.knowledgeBucket.bucketArn]
+      resources: [props.knowledgeBucket.bucketArn,props.knowledgeBucket.bucketArn+"/*"]
     }));
     this.deleteS3Function = deleteS3APIHandlerFunction;
 
@@ -150,7 +150,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       actions: [
         's3:*'
       ],
-      resources: [props.knowledgeBucket.bucketArn]
+      resources: [props.knowledgeBucket.bucketArn,props.knowledgeBucket.bucketArn+"/*"]
     }));
     this.getS3Function = getS3APIHandlerFunction;
 
@@ -188,7 +188,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       actions: [
         's3:*'
       ],
-      resources: [props.knowledgeBucket.bucketArn]
+      resources: [props.knowledgeBucket.bucketArn,props.knowledgeBucket.bucketArn+"/*"]
     }));
     this.uploadS3Function = uploadS3APIHandlerFunction;
 
