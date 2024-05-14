@@ -51,7 +51,7 @@ def lambda_handler(event, context):
     """
     
     # Retrieve the resource path from the event dictionary
-    resource_path = event.get('resource', '')
+    resource_path = event.get('rawPath', '')
     
     # Check if the request is for syncing Kendra
     if "sync-kendra" in resource_path:

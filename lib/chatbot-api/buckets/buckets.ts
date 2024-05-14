@@ -15,6 +15,10 @@ export class S3BucketStack extends cdk.Stack {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST],
+        allowedOrigins: ['*'],      
+      }]
     });
 
     this.feedbackBucket = new s3.Bucket(scope, 'FeedbackDownloadBucket', {
@@ -22,6 +26,10 @@ export class S3BucketStack extends cdk.Stack {
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
+      cors: [{
+        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST],
+        allowedOrigins: ['*'],      
+      }]
     });
   }
 }

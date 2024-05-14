@@ -20,14 +20,14 @@ class DecimalEncoder(json.JSONEncoder):
 
 def lambda_handler(event, context):
     # Determine the type of HTTP method
-    http_method = event.get('httpMethod')
-    if http_method == 'POST':
-        if event.get('resource') == '/user-feedback/download-feedback':
+    http_method = event.get('routeKey')
+    if 'POST' in http_method:
+        if event.get('rawPath') == '/user-feedback/download-feedback':
             return downloadFeedback(event)
         return post_feedback(event)
-    elif http_method == 'GET':
+    elif 'GET' in http_method:
         return get_feedback(event)
-    elif http_method == 'DELETE':
+    elif 'DELETE' in http_method:
         return delete_feedback(event)
     else:
         return {
