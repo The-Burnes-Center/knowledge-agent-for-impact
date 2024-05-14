@@ -16,7 +16,7 @@ export class S3BucketStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       cors: [{
-        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST],
+        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST,s3.HttpMethods.PUT,s3.HttpMethods.DELETE],
         allowedOrigins: ['*'],      
         allowedHeaders: ["*"]
       }]
@@ -28,7 +28,7 @@ export class S3BucketStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       cors: [{
-        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST],
+        allowedMethods: [s3.HttpMethods.GET,s3.HttpMethods.POST,s3.HttpMethods.PUT,s3.HttpMethods.DELETE],
         allowedOrigins: ['*'], 
         allowedHeaders: ["*"]     
       }]
