@@ -30,7 +30,16 @@ export class LambdaFunctionStack extends cdk.Stack {
         "INDEX_ID" : props.kendraIndexID
       }
     });
+    websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'bedrock:InvokeModelWithResponseStream',
+        'bedrock:InvokeModel'
+      ],
+      resources: ["*"]
+    }));
 
+  
     this.chatFunction = websocketAPIFunction;
 
     
