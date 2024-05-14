@@ -61,7 +61,7 @@ export class ChatBotApi extends Construct {
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
     
-    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPI.apiEndpoint, sessionTable : tables.historyTable, kendraIndexID : kendra.kendraIndex.attrId})
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPIStage.url, sessionTable : tables.historyTable, kendraIndex : kendra.kendraIndex})
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -78,6 +78,9 @@ export class ChatBotApi extends Construct {
     websocketBackend.wsAPI.addRoute('generateEmail', {
       integration: new WebSocketLambdaIntegration('emailIntegration', lambdaFunctions.chatFunction),
     });
+
+    websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);
+  
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({

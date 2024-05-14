@@ -6,11 +6,12 @@ import * as path from 'path';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
+import * as kendra from 'aws-cdk-lib/aws-kendra';
 
 interface LambdaFunctionStackProps {  
   readonly wsApiEndpoint : string;  
   readonly sessionTable : Table;
-  readonly kendraIndexID : string;
+  readonly kendraIndex : kendra.CfnIndex;
 }
 
 export class LambdaFunctionStack extends cdk.Stack {  
@@ -27,7 +28,7 @@ export class LambdaFunctionStack extends cdk.Stack {
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment : {
         "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint,
-        "INDEX_ID" : props.kendraIndexID
+        "INDEX_ID" : props.kendraIndex.attrId
       }
     });
     websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -38,6 +39,14 @@ export class LambdaFunctionStack extends cdk.Stack {
       ],
       resources: ["*"]
     }));
+    websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'kendra:Retrieve'
+      ],
+      resources: [props.kendraIndex.attrArn]
+    }));
+    
 
   
     this.chatFunction = websocketAPIFunction;
