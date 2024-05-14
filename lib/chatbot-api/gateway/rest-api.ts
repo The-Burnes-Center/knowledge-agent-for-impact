@@ -2,7 +2,7 @@ import * as path from "path";
 import * as cdk from "aws-cdk-lib";
 
 import { Construct } from "constructs";
-import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
+import { Duration, aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
 
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
@@ -22,11 +22,23 @@ export interface RestBackendAPIProps {
 }
 
 export class RestBackendAPI extends Construct {
-  public readonly restAPI : apigwv2.HttpApi;
+  public readonly restAPI: apigwv2.HttpApi;
   constructor(scope: Construct, id: string, props: RestBackendAPIProps) {
     super(scope, id);
-    
-    const httpApi = new apigwv2.HttpApi(this, 'HTTP-API');
+
+    const httpApi = new apigwv2.HttpApi(this, 'HTTP-API', {
+      corsPreflight: {
+        allowHeaders: ['Authorization'],
+        allowMethods: [
+          apigwv2.CorsHttpMethod.GET,
+          apigwv2.CorsHttpMethod.HEAD,
+          apigwv2.CorsHttpMethod.OPTIONS,
+          apigwv2.CorsHttpMethod.POST,
+        ],
+        allowOrigins: ['*'],
+        maxAge: Duration.days(10),
+      },
+    });
     this.restAPI = httpApi;
     /*const appSyncLambdaResolver = new lambda.Function(
       this,

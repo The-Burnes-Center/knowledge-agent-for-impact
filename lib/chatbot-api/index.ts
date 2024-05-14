@@ -44,9 +44,6 @@ export class ChatBotApi extends Construct {
   constructor(scope: Construct, id: string, props: ChatBotApiProps) {
     super(scope, id);
 
-    // const chatTables = new ChatBotDynamoDBTables(this, "ChatDynamoDBTables");
-    // const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets");
-
     const tables = new TableStack(this, "TableStack");
     const buckets = new S3BucketStack(this, "BucketStack");
     const kendra = new KendraIndexStack(this, "KendraStack", { s3Bucket: buckets.kendraBucket });
@@ -90,7 +87,23 @@ export class ChatBotApi extends Construct {
     })
     lambdaFunctions.chatFunction.addEnvironment(
       "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-sessions")
-    // this.wsAPI = websocketBackend.wsAPI;
+    
+
+    const feedbackAPIIntegration = new HttpLambdaIntegration('FeedbackAPIIntegration', lambdaFunctions.feedbackFunction);
+    restBackend.restAPI.addRoutes({
+      path: "/user-feedback",
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
+      integration: feedbackAPIIntegration,
+    })
+
+    const feedbackAPIDownloadIntegration = new HttpLambdaIntegration('FeedbackAPIIntegration', lambdaFunctions.feedbackFunction);
+    restBackend.restAPI.addRoutes({
+      path: "/user-feedback/download-feedback",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: feedbackAPIDownloadIntegration
+    })
+    
+      // this.wsAPI = websocketBackend.wsAPI;
 
 
 
