@@ -70,7 +70,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
         "DDB_TABLE_NAME" : props.sessionTable.tableName
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
     
     sessionAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -93,7 +94,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       environment: {
         "FEEDBACK_TABLE" : props.feedbackTable.tableName,
         "FEEDBACK_S3_DOWNLOAD" : props.feedbackBucket.bucketName
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
     
     feedbackAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -124,7 +126,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
         "BUCKET" : props.knowledgeBucket.bucketName,        
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
 
     deleteS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -142,7 +145,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment: {
         "BUCKET" : props.knowledgeBucket.bucketName,        
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
 
     getS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -162,7 +166,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       environment: {
         "KENDRA" : props.kendraIndex.attrId,      
         "SOURCE" : props.kendraSource.attrId  
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
 
     kendraSyncAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -180,7 +185,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment: {
         "BUCKET" : props.knowledgeBucket.bucketName,        
-      }
+      },
+      timeout: cdk.Duration.seconds(30)
     });
 
     uploadS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
