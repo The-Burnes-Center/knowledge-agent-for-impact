@@ -27,9 +27,10 @@ export class LambdaFunctionStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
       environment : {
-        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint,
+        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint.replace("wss","https"),
         "INDEX_ID" : props.kendraIndex.attrId
-      }
+      },
+      timeout: cdk.Duration.seconds(300)
     });
     websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
