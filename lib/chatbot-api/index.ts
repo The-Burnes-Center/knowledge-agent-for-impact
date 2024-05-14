@@ -56,8 +56,10 @@ export class ChatBotApi extends Construct {
         wsApiEndpoint: websocketBackend.wsAPIStage.url,
         sessionTable: tables.historyTable,
         kendraIndex: kendra.kendraIndex,
+        kendraSource: kendra.kendraSource,
         feedbackTable: tables.feedbackTable,
-        feedbackBucket: buckets.feedbackBucket
+        feedbackBucket: buckets.feedbackBucket,
+        knowledgeBucket: buckets.kendraBucket
       })
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
@@ -81,12 +83,13 @@ export class ChatBotApi extends Construct {
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({
-      path: "/user-sessions",
+      path: "/user-session",
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
       integration: sessionAPIIntegration
     })
+
     lambdaFunctions.chatFunction.addEnvironment(
-      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-sessions")
+      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-session")
     
 
     const feedbackAPIIntegration = new HttpLambdaIntegration('FeedbackAPIIntegration', lambdaFunctions.feedbackFunction);
@@ -96,13 +99,50 @@ export class ChatBotApi extends Construct {
       integration: feedbackAPIIntegration,
     })
 
-    const feedbackAPIDownloadIntegration = new HttpLambdaIntegration('FeedbackAPIIntegration', lambdaFunctions.feedbackFunction);
+    const feedbackAPIDownloadIntegration = new HttpLambdaIntegration('FeedbackDownloadAPIIntegration', lambdaFunctions.feedbackFunction);
     restBackend.restAPI.addRoutes({
       path: "/user-feedback/download-feedback",
       methods: [apigwv2.HttpMethod.POST],
       integration: feedbackAPIDownloadIntegration
     })
+
+    const s3GetAPIIntegration = new HttpLambdaIntegration('S3GetAPIIntegration', lambdaFunctions.getS3Function);
+    restBackend.restAPI.addRoutes({
+      path: "/s3-bucket-data",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: s3GetAPIIntegration
+    })
+
+    const s3DeleteAPIIntegration = new HttpLambdaIntegration('S3DeleteAPIIntegration', lambdaFunctions.deleteS3Function);
+    restBackend.restAPI.addRoutes({
+      path: "/delete-s3-file",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: s3DeleteAPIIntegration
+    })
+
+    const s3UploadAPIIntegration = new HttpLambdaIntegration('S3UploadAPIIntegration', lambdaFunctions.uploadS3Function);
+    restBackend.restAPI.addRoutes({
+      path: "/signed-url",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: s3UploadAPIIntegration
+    })
+
+    const kendraSyncProgressAPIIntegration = new HttpLambdaIntegration('KendraSyncAPIIntegration', lambdaFunctions.syncKendraFunction);
+    restBackend.restAPI.addRoutes({
+      path: "/kendra-sync/still-syncing",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: kendraSyncProgressAPIIntegration
+    })
+
+    const kendraSyncAPIIntegration = new HttpLambdaIntegration('KendraSyncAPIIntegration', lambdaFunctions.syncKendraFunction);
+    restBackend.restAPI.addRoutes({
+      path: "/kendra-sync/sync-kendra",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: kendraSyncAPIIntegration
+    })
     
+
+
       // this.wsAPI = websocketBackend.wsAPI;
 
 
@@ -161,8 +201,11 @@ export class ChatBotApi extends Construct {
     // });
 
     // // Prints out the AppSync GraphQL API key to the terminal
-    new cdk.CfnOutput(this, "wsAPI - apiEndpoint", {
+    new cdk.CfnOutput(this, "WS-API - apiEndpoint", {
       value: websocketBackend.wsAPI.apiEndpoint || "",
+    });
+    new cdk.CfnOutput(this, "HTTP-API - apiEndpoint", {
+      value: restBackend.restAPI.apiEndpoint || "",
     });
 
     // this.messagesTopic = realtimeBackend.messagesTopic;

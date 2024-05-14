@@ -34,6 +34,7 @@ export class RestBackendAPI extends Construct {
           apigwv2.CorsHttpMethod.HEAD,
           apigwv2.CorsHttpMethod.OPTIONS,
           apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.DELETE,
         ],
         allowOrigins: ['*'],
         maxAge: Duration.days(10),

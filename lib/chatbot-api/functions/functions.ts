@@ -9,18 +9,24 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import * as kendra from 'aws-cdk-lib/aws-kendra';
 import * as s3 from "aws-cdk-lib/aws-s3";
 
-interface LambdaFunctionStackProps {  
-  readonly wsApiEndpoint : string;  
-  readonly sessionTable : Table;
-  readonly kendraIndex : kendra.CfnIndex;
-  readonly feedbackTable : Table;
-  readonly feedbackBucket : s3.Bucket
+interface LambdaFunctionStackProps {
+  readonly wsApiEndpoint: string;
+  readonly sessionTable: Table;
+  readonly kendraIndex: kendra.CfnIndex;
+  readonly kendraSource: kendra.CfnDataSource;
+  readonly feedbackTable: Table;
+  readonly feedbackBucket: s3.Bucket;
+  readonly knowledgeBucket: s3.Bucket;
 }
 
-export class LambdaFunctionStack extends cdk.Stack {  
-  public readonly chatFunction : lambda.Function;
-  public readonly sessionFunction : lambda.Function;
-  public readonly feedbackFunction : lambda.Function;
+export class LambdaFunctionStack extends cdk.Stack {
+  public readonly chatFunction: lambda.Function;
+  public readonly sessionFunction: lambda.Function;
+  public readonly feedbackFunction: lambda.Function;
+  public readonly deleteS3Function: lambda.Function;
+  public readonly getS3Function: lambda.Function;
+  public readonly uploadS3Function: lambda.Function;
+  public readonly syncKendraFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionStackProps) {
     super(scope, id);
@@ -30,9 +36,9 @@ export class LambdaFunctionStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
       code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
       handler: 'index.handler', // Points to the 'hello' file in the lambda directory
-      environment : {
-        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint.replace("wss","https"),
-        "INDEX_ID" : props.kendraIndex.attrId
+      environment: {
+        "mvp_websocket__api_endpoint_test": props.wsApiEndpoint.replace("wss", "https"),
+        "INDEX_ID": props.kendraIndex.attrId
       },
       timeout: cdk.Duration.seconds(300)
     });
@@ -51,22 +57,22 @@ export class LambdaFunctionStack extends cdk.Stack {
       ],
       resources: [props.kendraIndex.attrArn]
     }));
-    
 
-  
+
+
     this.chatFunction = websocketAPIFunction;
 
-    
+
 
     const sessionAPIHandlerFunction = new lambda.Function(scope, 'SessionHandlerFunction', {
       runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
       code: lambda.Code.fromAsset(path.join(__dirname, 'session-handler')), // Points to the lambda directory
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
-        "DDB_TABLE_NAME" : props.sessionTable.tableName
+        "DDB_TABLE_NAME": props.sessionTable.tableName
       }
     });
-    
+
     sessionAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -85,11 +91,11 @@ export class LambdaFunctionStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, 'feedback-handler')), // Points to the lambda directory
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
-        "FEEDBACK_TABLE" : props.feedbackTable.tableName,
-        "FEEDBACK_S3_DOWNLOAD" : props.feedbackBucket.bucketName
+        "FEEDBACK_TABLE": props.feedbackTable.tableName,
+        "FEEDBACK_S3_DOWNLOAD": props.feedbackBucket.bucketName
       }
     });
-    
+
     feedbackAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: [
@@ -111,12 +117,80 @@ export class LambdaFunctionStack extends cdk.Stack {
     }));
 
     this.feedbackFunction = feedbackAPIHandlerFunction;
-    
 
-    // const viewS3FilesFunction = new lambda.Function(this, 'HelloWorldFunction', {
-    //   runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
-    //   code: lambda.Code.fromAsset('./websocket-chat'), // Points to the lambda directory
-    //   handler: 'index.handler', // Points to the 'hello' file in the lambda directory
-    // });
+    const deleteS3APIHandlerFunction = new lambda.Function(scope, 'DeleteS3FilesHandlerFunction', {
+      runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
+      code: lambda.Code.fromAsset(path.join(__dirname, 'knowledge-management/delete-s3')), // Points to the lambda directory
+      handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
+      environment: {
+        "BUCKET": props.knowledgeBucket.bucketName,
+      }
+    });
+
+    deleteS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:*'
+      ],
+      resources: [props.knowledgeBucket.bucketArn]
+    }));
+    this.deleteS3Function = deleteS3APIHandlerFunction;
+
+    const getS3APIHandlerFunction = new lambda.Function(scope, 'GetS3FilesHandlerFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
+      code: lambda.Code.fromAsset(path.join(__dirname, 'knowledge-management/get-s3')), // Points to the lambda directory
+      handler: 'index.handler', // Points to the 'hello' file in the lambda directory
+      environment: {
+        "BUCKET": props.knowledgeBucket.bucketName,
+      }
+    });
+
+    getS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:*'
+      ],
+      resources: [props.knowledgeBucket.bucketArn]
+    }));
+    this.getS3Function = getS3APIHandlerFunction;
+
+
+    const kendraSyncAPIHandlerFunction = new lambda.Function(scope, 'SyncKendraHandlerFunction', {
+      runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
+      code: lambda.Code.fromAsset(path.join(__dirname, 'knowledge-management/kendra-sync')), // Points to the lambda directory
+      handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
+      environment: {
+        "KENDRA": props.kendraIndex.attrId,
+        "SOURCE": props.kendraSource.attrId
+      }
+    });
+
+    kendraSyncAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'kendra:*'
+      ],
+      resources: [props.kendraIndex.attrId, props.kendraSource.attrId]
+    }));
+    this.syncKendraFunction = kendraSyncAPIHandlerFunction;
+
+    const uploadS3APIHandlerFunction = new lambda.Function(scope, 'UploadS3FilesHandlerFunction', {
+      runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
+      code: lambda.Code.fromAsset(path.join(__dirname, 'knowledge-management/upload-s3')), // Points to the lambda directory
+      handler: 'index.handler', // Points to the 'hello' file in the lambda directory
+      environment: {
+        "BUCKET": props.knowledgeBucket.bucketName,
+      }
+    });
+
+    uploadS3APIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:*'
+      ],
+      resources: [props.knowledgeBucket.bucketArn]
+    }));
+    this.uploadS3Function = uploadS3APIHandlerFunction;
+
   }
 }

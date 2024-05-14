@@ -11,6 +11,7 @@ export interface KendraIndexStackProps {
 
 export class KendraIndexStack extends cdk.Stack {
   public readonly kendraIndex : kendra.CfnIndex;
+  public readonly kendraSource : kendra.CfnDataSource;
   constructor(scope: Construct, id: string, props: KendraIndexStackProps) {
     super(scope, id);
 
@@ -109,5 +110,6 @@ export class KendraIndexStack extends cdk.Stack {
     });
 
     this.kendraIndex = index;
+    this.kendraSource = dataSource;
   }
 }
