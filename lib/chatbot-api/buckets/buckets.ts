@@ -4,6 +4,7 @@ import { Construct } from "constructs";
 
 export class S3BucketStack extends cdk.Stack {
   public readonly kendraBucket: s3.Bucket;
+  public readonly feedbackBucket: s3.Bucket;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -11,6 +12,13 @@ export class S3BucketStack extends cdk.Stack {
     // Create a new S3 bucket
     this.kendraBucket = new s3.Bucket(scope, 'KendraSourceBucket', {
       bucketName: 'kendra-s3-source',
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    this.feedbackBucket = new s3.Bucket(scope, 'FeedbackDownloadBucket', {
+      bucketName: 'feedback-download',
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,

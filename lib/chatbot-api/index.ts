@@ -6,28 +6,21 @@ import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
-import { Construct } from "constructs";
-// import { RagEngines } from "../rag-engines";
-// import { Shared } from "../shared";
-// import { SageMakerModelEndpoint, SystemConfig } from "../shared/types";
-// import { ChatBotDynamoDBTables } from "./chatbot-dynamodb-tables";
-// import { ChatBotS3Buckets } from "./chatbot-s3-buckets";
-// import { ApiResolvers } from "./gateway/rest-api";
-// import { RealtimeGraphqlApiBackend } from "./gateway/websocket-api";
 
 
-import {WebsocketBackendAPI} from "./gateway/websocket-api"
-import {RestBackendAPI} from "./gateway/rest-api"
-import {LambdaFunctionStack} from "./functions/functions"
-import {TableStack} from "./tables/tables"
-import {KendraIndexStack} from "./kendra/kendra"
-import {S3BucketStack} from "./buckets/buckets"
 
-import * as appsync from "aws-cdk-lib/aws-appsync";
-import { RetentionDays } from "aws-cdk-lib/aws-logs";
+
+import { WebsocketBackendAPI } from "./gateway/websocket-api"
+import { RestBackendAPI } from "./gateway/rest-api"
+import { LambdaFunctionStack } from "./functions/functions"
+import { TableStack } from "./tables/tables"
+import { KendraIndexStack } from "./kendra/kendra"
+import { S3BucketStack } from "./buckets/buckets"
+
 import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
+import { Construct } from "constructs";
 
 // import { NagSuppressions } from "cdk-nag";
 
@@ -56,12 +49,19 @@ export class ChatBotApi extends Construct {
 
     const tables = new TableStack(this, "TableStack");
     const buckets = new S3BucketStack(this, "BucketStack");
-    const kendra = new KendraIndexStack(this, "KendraStack",{s3Bucket:buckets.kendraBucket});
+    const kendra = new KendraIndexStack(this, "KendraStack", { s3Bucket: buckets.kendraBucket });
 
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
-    
-    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions", {wsApiEndpoint : websocketBackend.wsAPIStage.url, sessionTable : tables.historyTable, kendraIndex : kendra.kendraIndex})
+
+    const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions",
+      {
+        wsApiEndpoint: websocketBackend.wsAPIStage.url,
+        sessionTable: tables.historyTable,
+        kendraIndex: kendra.kendraIndex,
+        feedbackTable: tables.feedbackTable,
+        feedbackBucket: buckets.feedbackBucket
+      })
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -80,20 +80,20 @@ export class ChatBotApi extends Construct {
     });
 
     websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);
-  
+
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({
       path: "/user-sessions",
-      methods: [apigwv2.HttpMethod.GET,apigwv2.HttpMethod.POST,apigwv2.HttpMethod.DELETE],
+      methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
       integration: sessionAPIIntegration
     })
     lambdaFunctions.chatFunction.addEnvironment(
       "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-sessions")
     // this.wsAPI = websocketBackend.wsAPI;
 
-    
-    
+
+
 
     // const api = new appsync.GraphqlApi(this, "ChatbotApi", {
     //   name: "ChatbotGraphqlApi",

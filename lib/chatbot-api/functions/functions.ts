@@ -7,16 +7,20 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import * as kendra from 'aws-cdk-lib/aws-kendra';
+import * as s3 from "aws-cdk-lib/aws-s3";
 
 interface LambdaFunctionStackProps {  
   readonly wsApiEndpoint : string;  
   readonly sessionTable : Table;
   readonly kendraIndex : kendra.CfnIndex;
+  readonly feedbackTable : Table;
+  readonly feedbackBucket : s3.Bucket
 }
 
 export class LambdaFunctionStack extends cdk.Stack {  
   public readonly chatFunction : lambda.Function;
   public readonly sessionFunction : lambda.Function;
+  public readonly feedbackFunction : lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionStackProps) {
     super(scope, id);
@@ -75,6 +79,39 @@ export class LambdaFunctionStack extends cdk.Stack {
       resources: [props.sessionTable.tableArn, props.sessionTable.tableArn + "/index/*"]
     }));
     this.sessionFunction = sessionAPIHandlerFunction;
+
+    const feedbackAPIHandlerFunction = new lambda.Function(scope, 'FeedbackHandlerFunction', {
+      runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
+      code: lambda.Code.fromAsset(path.join(__dirname, 'feedback-handler')), // Points to the lambda directory
+      handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
+      environment: {
+        "FEEDBACK_TABLE" : props.feedbackTable.tableName,
+        "FEEDBACK_S3_DOWNLOAD" : props.feedbackBucket.bucketName
+      }
+    });
+    
+    feedbackAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'dynamodb:GetItem',
+        'dynamodb:PutItem',
+        'dynamodb:UpdateItem',
+        'dynamodb:DeleteItem',
+        'dynamodb:Query'
+      ],
+      resources: [props.feedbackTable.tableArn, props.feedbackTable.tableArn + "/index/*"]
+    }));
+
+    feedbackAPIHandlerFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:*'
+      ],
+      resources: [props.feedbackBucket.bucketArn]
+    }));
+
+    this.feedbackFunction = feedbackAPIHandlerFunction;
+    
 
     // const viewS3FilesFunction = new lambda.Function(this, 'HelloWorldFunction', {
     //   runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
