@@ -72,7 +72,7 @@ export class LambdaFunctionStack extends cdk.Stack {
         'dynamodb:DeleteItem',
         'dynamodb:Query'
       ],
-      resources: [props.sessionTable.tableArn]
+      resources: [props.sessionTable.tableArn, props.sessionTable.tableArn + "/index/*"]
     }));
     this.sessionFunction = sessionAPIHandlerFunction;
 
