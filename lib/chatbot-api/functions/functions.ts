@@ -160,8 +160,8 @@ export class LambdaFunctionStack extends cdk.Stack {
       code: lambda.Code.fromAsset(path.join(__dirname, 'knowledge-management/kendra-sync')), // Points to the lambda directory
       handler: 'lambda_function.lambda_handler', // Points to the 'hello' file in the lambda directory
       environment: {
-        "KENDRA": props.kendraIndex.attrId,
-        "SOURCE": props.kendraSource.attrId
+        "KENDRA": props.kendraIndex.attrArn,
+        "SOURCE": props.kendraSource.attrArn
       }
     });
 
