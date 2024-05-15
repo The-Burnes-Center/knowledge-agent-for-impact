@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ChatBotApi } from "./chatbot-api";
+import { AUTHENTICATION } from "./constants"
+import { AuthorizationStack } from "./authorization"
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class GenAiMvpStack extends cdk.Stack {
@@ -14,5 +16,8 @@ export class GenAiMvpStack extends cdk.Stack {
     //   visibilityTimeout: cdk.Duration.seconds(300)
     // });
     const chatbotAPI = new ChatBotApi(this, "ChatbotAPI", {});
+    if (AUTHENTICATION) {
+      const authentication = new AuthorizationStack(this, "Authorization")
+    }
   }
 }

@@ -1,3 +1,6 @@
 [submodule "lib/user-interface"]
 	path = lib/user-interface
 	url = https://github.com/rudra-sett/super-secret-swag.git
+[submodule "lib/lib/user-interface-new/app"]
+	path = lib/lib/user-interface-new/app
+	url = https://github.com/rudra-sett/super-secret-swag.git
