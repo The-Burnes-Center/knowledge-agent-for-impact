@@ -142,7 +142,7 @@ def get_feedback(event):
             query_kwargs['ExclusiveStartKey'] = json.loads(exclusive_start_key)
         
         if not topic or topic=="any":
-            query_kwargs['IndexName'] = 'CreatedAt-index'
+            query_kwargs['IndexName'] = 'CreatedAtIndex'
             # query_kwargs['KeyConditionExpression'] = Key('CreatedAt').between(start_time, end_time)
             del query_kwargs['KeyConditionExpression']
             query_kwargs["FilterExpression"]=Attr('CreatedAt').between(start_time, end_time)

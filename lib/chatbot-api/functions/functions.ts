@@ -81,7 +81,8 @@ export class LambdaFunctionStack extends cdk.Stack {
         'dynamodb:PutItem',
         'dynamodb:UpdateItem',
         'dynamodb:DeleteItem',
-        'dynamodb:Query'
+        'dynamodb:Query',
+        'dynamodb:Scan'
       ],
       resources: [props.sessionTable.tableArn, props.sessionTable.tableArn + "/index/*"]
     }));
@@ -105,7 +106,8 @@ export class LambdaFunctionStack extends cdk.Stack {
         'dynamodb:PutItem',
         'dynamodb:UpdateItem',
         'dynamodb:DeleteItem',
-        'dynamodb:Query'
+        'dynamodb:Query',
+        'dynamodb:Scan'
       ],
       resources: [props.feedbackTable.tableArn, props.feedbackTable.tableArn + "/index/*"]
     }));
