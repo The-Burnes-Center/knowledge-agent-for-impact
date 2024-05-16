@@ -92,9 +92,14 @@ export class Website extends Construct {
                   ],
                 },
               },
-            ],            
+            ],
+            s3OriginSource: {
+              s3BucketSource: props.websiteBucket,
+              originAccessIdentity,
+            },            
           },
         ],
+        
         // geoRestriction: cfGeoRestrictEnable ? cf.GeoRestriction.allowlist(...cfGeoRestrictList): undefined,
         errorConfigurations: [
           {
