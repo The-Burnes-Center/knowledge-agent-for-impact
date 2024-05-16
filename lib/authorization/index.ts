@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-
+import { cognitoDomainName } from '../constants' 
 import { UserPool, UserPoolIdentityProviderOidc,UserPoolClient, UserPoolClientIdentityProvider, ProviderAttribute } from 'aws-cdk-lib/aws-cognito';
 
 export class AuthorizationStack extends Construct {
@@ -25,7 +25,7 @@ export class AuthorizationStack extends Construct {
     // });
     userPool.addDomain('CognitoDomain', {
       cognitoDomain: {
-        domainPrefix: scope.toString(),
+        domainPrefix: cognitoDomainName,
       },
     });
     
