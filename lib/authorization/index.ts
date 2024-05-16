@@ -31,6 +31,7 @@ export class AuthorizationStack extends Construct {
       },
       // ... other user pool configurations
     });
+    this.userPool = userPool;
 
     // Create a provider attribute for mapping Azure claims
     // const providerAttribute = new ProviderAttribute({
@@ -64,6 +65,8 @@ export class AuthorizationStack extends Construct {
       userPool,      
       // supportedIdentityProviders: [UserPoolClientIdentityProvider.custom(azureProvider.providerName)],
     });
+
+    this.userPoolClient = userPoolClient;
 
     const authorizerHandlerFunction = new lambda.Function(this, 'AuthorizationFunction', {
       runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime

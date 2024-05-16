@@ -59,7 +59,7 @@ export class ChatBotApi extends Construct {
         knowledgeBucket: buckets.kendraBucket
       })
 
-    const wsAuthorizer = new WebSocketLambdaAuthorizer('Authorizer', props.authentication.lambdaAuthorizer);
+    const wsAuthorizer = new WebSocketLambdaAuthorizer('WebSocketAuthorizer', props.authentication.lambdaAuthorizer);
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
@@ -85,7 +85,7 @@ export class ChatBotApi extends Construct {
     websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);
 
     
-    const httpAuthorizer = new HttpUserPoolAuthorizer('BooksAuthorizer', props.authentication.userPool);
+    const httpAuthorizer = new HttpUserPoolAuthorizer('HTTPAuthorizer', props.authentication.userPool);
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({
