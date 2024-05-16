@@ -25,7 +25,7 @@ export class AuthorizationStack extends Construct {
     // });
     userPool.addDomain('CognitoDomain', {
       cognitoDomain: {
-        domainPrefix: 'chat-app',
+        domainPrefix: scope.toString(),
       },
     });
     
