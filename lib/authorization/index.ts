@@ -22,13 +22,13 @@ export class AuthorizationStack extends Construct {
     // Create the Cognito User Pool
     const userPool = new UserPool(this, 'UserPool', {      
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      selfSignUpEnabled: false,
-      mfa: cognito.Mfa.OPTIONAL,
-      advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
-      autoVerify: { email: true, phone: true },
-      signInAliases: {
-        email: true,
-      },
+      // selfSignUpEnabled: false,
+      // mfa: cognito.Mfa.OPTIONAL,
+      // advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+      // autoVerify: { email: true, phone: true },
+      // signInAliases: {
+      //   email: true,
+      // },
       // ... other user pool configurations
     });
     this.userPool = userPool;
