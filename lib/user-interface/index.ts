@@ -1,4 +1,3 @@
-import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
 import * as cdk from "aws-cdk-lib";
 import * as cf from "aws-cdk-lib/aws-cloudfront";
 import * as iam from "aws-cdk-lib/aws-iam";
@@ -13,24 +12,21 @@ import * as path from "node:path";
 import { ChatBotApi } from "../chatbot-api";
 import { Website } from "./generate-app"
 import { NagSuppressions } from "cdk-nag";
+import { Utils } from "../shared/utils"
+import { OIDCIntegrationName } from "../constants";
 
 export interface UserInterfaceProps {
-  readonly config: SystemConfig;
-  readonly shared: Shared;
   readonly userPoolId: string;
   readonly userPoolClientId: string;
-  readonly identityPool: cognitoIdentityPool.IdentityPool;
   readonly api: ChatBotApi;
-  readonly chatbotFilesBucket: s3.Bucket;
-  readonly crossEncodersEnabled: boolean;
-  readonly sagemakerEmbeddingsEnabled: boolean;
+  readonly cognitoDomain : string;
 }
 
 export class UserInterface extends Construct {
   constructor(scope: Construct, id: string, props: UserInterfaceProps) {
     super(scope, id);
 
-    const appPath = path.join(__dirname, "react-app");
+    const appPath = path.join(__dirname, "app");
     const buildPath = path.join(appPath, "dist");
 
     const uploadLogsBucket = new s3.Bucket(this, "WebsiteLogsBucket", {
@@ -44,108 +40,39 @@ export class UserInterface extends Construct {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       autoDeleteObjects: true,
-      bucketName: props.config.privateWebsite ? props.config.domain : undefined, 
+      // bucketName: props.config.privateWebsite ? props.config.domain : undefined,
       websiteIndexDocument: "index.html",
       websiteErrorDocument: "index.html",
       enforceSSL: true,
       serverAccessLogsBucket: uploadLogsBucket,
     });
-    
+
     // Deploy either Private (only accessible within VPC) or Public facing website
     let apiEndpoint: string;
     let websocketEndpoint: string;
     let distribution;
-    
-    const publicWebsite = new Website(this, "Website", {...props, websiteBucket: websiteBucket });
+
+    const publicWebsite = new Website(this, "Website", { ...props, websiteBucket: websiteBucket });
     distribution = publicWebsite.distribution
 
-      
+
 
     const exportsAsset = s3deploy.Source.jsonData("aws-exports.json", {
-      aws_project_region: cdk.Aws.REGION,
-      aws_cognito_region: cdk.Aws.REGION,
-      aws_user_pools_id: props.userPoolId,
-      aws_user_pools_web_client_id: props.userPoolClientId,
-      aws_cognito_identity_pool_id: props.identityPool.identityPoolId,
       Auth: {
         region: cdk.Aws.REGION,
         userPoolId: props.userPoolId,
         userPoolWebClientId: props.userPoolClientId,
-        identityPoolId: props.identityPool.identityPoolId,
+        oauth: {
+          domain: props.cognitoDomain.concat(".auth.us-east-1.amazoncognito.com"),
+          scope: ["email", "openid", "profile"],
+          redirectSignIn: distribution.distributionDomainName,
+          redirectSignOut: "https://myapplications.microsoft.com/",
+          responseType: "code"
+        }
       },
-      aws_appsync_graphqlEndpoint: props.api.graphqlApi.graphqlUrl,
-      aws_appsync_region: cdk.Aws.REGION,
-      aws_appsync_authenticationType: "AMAZON_COGNITO_USER_POOLS",
-      aws_appsync_apiKey: props.api.graphqlApi?.apiKey,
-      Storage: {
-        AWSS3: {
-          bucket: props.chatbotFilesBucket.bucketName,
-          region: cdk.Aws.REGION,
-        },
-      },
-      config: {
-        rag_enabled: props.config.rag.enabled,
-        cross_encoders_enabled: props.crossEncodersEnabled,
-        sagemaker_embeddings_enabled: props.sagemakerEmbeddingsEnabled,
-        default_embeddings_model: Utils.getDefaultEmbeddingsModel(props.config),
-        default_cross_encoder_model: Utils.getDefaultCrossEncoderModel(
-          props.config
-        ),
-        privateWebsite: props.config.privateWebsite ? true : false,
-      },
-    });
-
-    // Allow authenticated web users to read upload data to the attachments bucket for their chat files
-    // ref: https://docs.amplify.aws/lib/storage/getting-started/q/platform/js/#using-amazon-s3
-    props.identityPool.authenticatedRole.addToPrincipalPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        resources: [
-          `${props.chatbotFilesBucket.bucketArn}/public/*`,
-          `${props.chatbotFilesBucket.bucketArn}/protected/\${cognito-identity.amazonaws.com:sub}/*`,
-          `${props.chatbotFilesBucket.bucketArn}/private/\${cognito-identity.amazonaws.com:sub}/*`,
-        ],
-      })
-    );
-    props.identityPool.authenticatedRole.addToPrincipalPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["s3:ListBucket"],
-        resources: [`${props.chatbotFilesBucket.bucketArn}`],
-        conditions: {
-          StringLike: {
-            "s3:prefix": [
-              "public/",
-              "public/*",
-              "protected/",
-              "protected/*",
-              "private/${cognito-identity.amazonaws.com:sub}/",
-              "private/${cognito-identity.amazonaws.com:sub}/*",
-            ],
-          },
-        },
-      })
-    );
-
-    // Enable CORS for the attachments bucket to allow uploads from the user interface
-    // ref: https://docs.amplify.aws/lib/storage/getting-started/q/platform/js/#amazon-s3-bucket-cors-policy-setup
-    props.chatbotFilesBucket.addCorsRule({
-      allowedMethods: [
-        s3.HttpMethods.GET,
-        s3.HttpMethods.PUT,
-        s3.HttpMethods.POST,
-        s3.HttpMethods.DELETE,
-      ],
-      allowedOrigins: ["*"],
-      allowedHeaders: ["*"],
-      exposedHeaders: [
-        "x-amz-server-side-encryption",
-        "x-amz-request-id",
-        "x-amz-id-2",
-        "ETag",
-      ],
-      maxAge: 3000,
+      httpEndpoint : props.api.httpAPI.restAPI.url,
+      wsEndpoint : props.api.wsAPI.wsAPIStage.url,
+      federatedSignInProvider : OIDCIntegrationName
     });
 
     const asset = s3deploy.Source.asset(appPath, {
@@ -190,15 +117,15 @@ export class UserInterface extends Construct {
       prune: false,
       sources: [asset, exportsAsset],
       destinationBucket: websiteBucket,
-      distribution: props.config.privateWebsite ? undefined : distribution
+      distribution: distribution
     });
 
-   
+
     /**
      * CDK NAG suppression
      */
     NagSuppressions.addResourceSuppressions(
-      uploadLogsBucket, 
+      uploadLogsBucket,
       [
         {
           id: "AwsSolutions-S1",

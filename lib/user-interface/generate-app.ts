@@ -1,4 +1,3 @@
-import * as cognitoIdentityPool from "@aws-cdk/aws-cognito-identitypool-alpha";
 import * as cdk from "aws-cdk-lib";
 import * as cf from "aws-cdk-lib/aws-cloudfront";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -11,11 +10,7 @@ import { NagSuppressions } from "cdk-nag";
 export interface WebsiteProps {  
   readonly userPoolId: string;
   readonly userPoolClientId: string;
-  readonly identityPool: cognitoIdentityPool.IdentityPool;
   readonly api: ChatBotApi;
-  readonly chatbotFilesBucket: s3.Bucket;
-  readonly crossEncodersEnabled: boolean;
-  readonly sagemakerEmbeddingsEnabled: boolean;
   readonly websiteBucket: s3.Bucket;
 }
 
@@ -30,10 +25,7 @@ export class Website extends Construct {
     /////////////////////////////////////
 
     const originAccessIdentity = new cf.OriginAccessIdentity(this, "S3OAI");
-    props.websiteBucket.grantRead(originAccessIdentity);
-    props.chatbotFilesBucket.grantRead(originAccessIdentity);
-    const cfGeoRestrictEnable = props.config.cfGeoRestrictEnable;
-    const cfGeoRestrictList = props.config.cfGeoRestrictList;
+    props.websiteBucket.grantRead(originAccessIdentity);    
 
 
     const distributionLogsBucket = new s3.Bucket(
@@ -59,13 +51,13 @@ export class Website extends Construct {
         //    "certificate" : "arn:aws:acm:us-east-1:1234567890:certificate/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXX",
         //    "domain" : "sub.example.com"
         // 2. After the deployment, in your Route53 Hosted Zone, add an "A Record" that points to the Cloudfront Alias (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-cloudfront-distribution.html)
-        ...(props.config.certificate && props.config.domain && {
-          viewerCertificate: cf.ViewerCertificate.fromAcmCertificate(
-            acm.Certificate.fromCertificateArn(this,'CloudfrontAcm', props.config.certificate),
-            {
-              aliases: [props.config.domain]
-            })
-        }),
+        // ...(props.config.certificate && props.config.domain && {
+        //   viewerCertificate: cf.ViewerCertificate.fromAcmCertificate(
+        //     acm.Certificate.fromCertificateArn(this,'CloudfrontAcm', props.config.certificate),
+        //     {
+        //       aliases: [props.config.domain]
+        //     })
+        // }),
         viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         priceClass: cf.PriceClass.PRICE_CLASS_ALL,
         httpVersion: cf.HttpVersion.HTTP2_AND_3,
@@ -83,7 +75,7 @@ export class Website extends Construct {
           {
             behaviors: [
               {
-                pathPattern: "/chabot/files/*",
+                pathPattern: "/chatbot/files/*",
                 allowedMethods: cf.CloudFrontAllowedMethods.ALL,
                 viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 defaultTtl: cdk.Duration.seconds(0),
@@ -100,14 +92,10 @@ export class Website extends Construct {
                   ],
                 },
               },
-            ],
-            s3OriginSource: {
-              s3BucketSource: props.chatbotFilesBucket,
-              originAccessIdentity,
-            },
+            ],            
           },
         ],
-        geoRestriction: cfGeoRestrictEnable ? cf.GeoRestriction.allowlist(...cfGeoRestrictList): undefined,
+        // geoRestriction: cfGeoRestrictEnable ? cf.GeoRestriction.allowlist(...cfGeoRestrictList): undefined,
         errorConfigurations: [
           {
             errorCode: 404,
