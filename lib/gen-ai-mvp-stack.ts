@@ -15,9 +15,12 @@ export class GenAiMvpStack extends cdk.Stack {
     // const queue = new sqs.Queue(this, 'GenAiMvpQueue', {
     //   visibilityTimeout: cdk.Duration.seconds(300)
     // });
-    const chatbotAPI = new ChatBotApi(this, "ChatbotAPI", {});
+    let authentication;
     if (AUTHENTICATION) {
-      const authentication = new AuthorizationStack(this, "Authorization")
+      authentication = new AuthorizationStack(this, "Authorization")
     }
+
+    const chatbotAPI = new ChatBotApi(this, "ChatbotAPI", {authentication});
+    
   }
 }

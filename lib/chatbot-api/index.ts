@@ -7,8 +7,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as cdk from "aws-cdk-lib";
 import * as path from "path";
 
-
-
+import { AuthorizationStack } from '../authorization'
 
 import { WebsocketBackendAPI } from "./gateway/websocket-api"
 import { RestBackendAPI } from "./gateway/rest-api"
@@ -19,23 +18,19 @@ import { S3BucketStack } from "./buckets/buckets"
 
 import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { WebSocketLambdaAuthorizer, HttpUserPoolAuthorizer  } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 // import { NagSuppressions } from "cdk-nag";
 
 export interface ChatBotApiProps {
-  // readonly shared: Shared;
-  // readonly config: SystemConfig;
-  // readonly ragEngines?: RagEngines;
-  // readonly userPool: cognito.UserPool;
-  // readonly modelsParameter: ssm.StringParameter;
-  // readonly models: SageMakerModelEndpoint[];
+  readonly authentication: AuthorizationStack; 
 }
 
 export class ChatBotApi extends Construct {
-  // public readonly messagesTopic: sns.Topic;
-  // public readonly sessionsTable: dynamodb.Table;
+  public readonly httpAPI: RestBackendAPI;
+  public readonly wsAPI: WebsocketBackendAPI;
   // public readonly byUserIdIndex: string;
   // public readonly filesBucket: s3.Bucket;
   // public readonly userFeedbackBucket: s3.Bucket;
@@ -49,7 +44,9 @@ export class ChatBotApi extends Construct {
     const kendra = new KendraIndexStack(this, "KendraStack", { s3Bucket: buckets.kendraBucket });
 
     const restBackend = new RestBackendAPI(this, "RestBackend", {})
+    this.httpAPI = restBackend;
     const websocketBackend = new WebsocketBackendAPI(this, "WebsocketBackend", {})
+    this.wsAPI = websocketBackend;
 
     const lambdaFunctions = new LambdaFunctionStack(this, "LambdaFunctions",
       {
@@ -62,30 +59,40 @@ export class ChatBotApi extends Construct {
         knowledgeBucket: buckets.kendraBucket
       })
 
+    const wsAuthorizer = new WebSocketLambdaAuthorizer('Authorizer', props.authentication.lambdaAuthorizer);
+
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
+      authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('$connect', {
       integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
+      authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('$default', {
       integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
+      authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('$disconnect', {
       integration: new WebSocketLambdaIntegration('chatbotDisconnectionIntegration', lambdaFunctions.chatFunction),
+      authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('generateEmail', {
       integration: new WebSocketLambdaIntegration('emailIntegration', lambdaFunctions.chatFunction),
+      authorizer: wsAuthorizer
     });
 
     websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);
 
+    
+    const httpAuthorizer = new HttpUserPoolAuthorizer('BooksAuthorizer', props.authentication.userPool);
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({
       path: "/user-session",
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
-      integration: sessionAPIIntegration
+      integration: sessionAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     lambdaFunctions.chatFunction.addEnvironment(
@@ -97,48 +104,55 @@ export class ChatBotApi extends Construct {
       path: "/user-feedback",
       methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST, apigwv2.HttpMethod.DELETE],
       integration: feedbackAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const feedbackAPIDownloadIntegration = new HttpLambdaIntegration('FeedbackDownloadAPIIntegration', lambdaFunctions.feedbackFunction);
     restBackend.restAPI.addRoutes({
       path: "/user-feedback/download-feedback",
       methods: [apigwv2.HttpMethod.POST],
-      integration: feedbackAPIDownloadIntegration
+      integration: feedbackAPIDownloadIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const s3GetAPIIntegration = new HttpLambdaIntegration('S3GetAPIIntegration', lambdaFunctions.getS3Function);
     restBackend.restAPI.addRoutes({
       path: "/s3-bucket-data",
       methods: [apigwv2.HttpMethod.POST],
-      integration: s3GetAPIIntegration
+      integration: s3GetAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const s3DeleteAPIIntegration = new HttpLambdaIntegration('S3DeleteAPIIntegration', lambdaFunctions.deleteS3Function);
     restBackend.restAPI.addRoutes({
       path: "/delete-s3-file",
       methods: [apigwv2.HttpMethod.POST],
-      integration: s3DeleteAPIIntegration
+      integration: s3DeleteAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const s3UploadAPIIntegration = new HttpLambdaIntegration('S3UploadAPIIntegration', lambdaFunctions.uploadS3Function);
     restBackend.restAPI.addRoutes({
       path: "/signed-url",
       methods: [apigwv2.HttpMethod.POST],
-      integration: s3UploadAPIIntegration
+      integration: s3UploadAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const kendraSyncProgressAPIIntegration = new HttpLambdaIntegration('KendraSyncAPIIntegration', lambdaFunctions.syncKendraFunction);
     restBackend.restAPI.addRoutes({
       path: "/kendra-sync/still-syncing",
       methods: [apigwv2.HttpMethod.GET],
-      integration: kendraSyncProgressAPIIntegration
+      integration: kendraSyncProgressAPIIntegration,
+      authorizer: httpAuthorizer,
     })
 
     const kendraSyncAPIIntegration = new HttpLambdaIntegration('KendraSyncAPIIntegration', lambdaFunctions.syncKendraFunction);
     restBackend.restAPI.addRoutes({
       path: "/kendra-sync/sync-kendra",
       methods: [apigwv2.HttpMethod.GET],
-      integration: kendraSyncAPIIntegration
+      integration: kendraSyncAPIIntegration,
+      authorizer: httpAuthorizer,
     })
     
 
