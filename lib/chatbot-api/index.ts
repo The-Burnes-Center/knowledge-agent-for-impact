@@ -63,7 +63,7 @@ export class ChatBotApi extends Construct {
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
-      authorizer: wsAuthorizer
+      // authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('$connect', {
       integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
@@ -71,15 +71,15 @@ export class ChatBotApi extends Construct {
     });
     websocketBackend.wsAPI.addRoute('$default', {
       integration: new WebSocketLambdaIntegration('chatbotConnectionIntegration', lambdaFunctions.chatFunction),
-      authorizer: wsAuthorizer
+      // authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('$disconnect', {
       integration: new WebSocketLambdaIntegration('chatbotDisconnectionIntegration', lambdaFunctions.chatFunction),
-      authorizer: wsAuthorizer
+      // authorizer: wsAuthorizer
     });
     websocketBackend.wsAPI.addRoute('generateEmail', {
       integration: new WebSocketLambdaIntegration('emailIntegration', lambdaFunctions.chatFunction),
-      authorizer: wsAuthorizer
+      // authorizer: wsAuthorizer
     });
 
     websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);

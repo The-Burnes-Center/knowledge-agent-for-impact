@@ -86,9 +86,9 @@ export class AuthorizationStack extends Construct {
       value: userPoolClient.userPoolClientId || "",
     });
 
-    new cdk.CfnOutput(this, "UserPool Client Name", {
-      value: userPoolClient.userPoolClientName || "",
-    });
+    // new cdk.CfnOutput(this, "UserPool Client Name", {
+    //   value: userPoolClient.userPoolClientName || "",
+    // });
 
 
     
