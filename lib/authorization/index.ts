@@ -8,13 +8,13 @@ export class AuthorizationStack extends Construct {
     super(scope, id);
 
     // Replace these values with your Azure client ID, client secret, and issuer URL
-    const azureClientId = 'your-azure-client-id';
-    const azureClientSecret = 'your-azure-client-secret';
-    const azureIssuerUrl = 'https://your-azure-issuer.com';
+    // const azureClientId = 'your-azure-client-id';
+    // const azureClientSecret = 'your-azure-client-secret';
+    // const azureIssuerUrl = 'https://your-azure-issuer.com';
 
     // Create the Cognito User Pool
-    const userPool = new UserPool(this, 'UserPool', {
-      userPoolName: scope.node.id.concat("UserPool"),
+    const userPool = new UserPool(this, 'UserPool', {      
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
       // ... other user pool configurations
     });
 
@@ -31,27 +31,28 @@ export class AuthorizationStack extends Construct {
     
 
     // Add the Azure OIDC identity provider to the User Pool
-    const azureProvider = new UserPoolIdentityProviderOidc(this, 'AzureProvider', {
-      clientId: azureClientId,
-      clientSecret: azureClientSecret,
-      issuerUrl: azureIssuerUrl,
-      userPool: userPool,
-      attributeMapping: {
-        // email: ProviderAttribute.fromString('email'),
-        // fullname: ProviderAttribute.fromString('name'),
-        // custom: {
-        //   customKey: providerAttribute,
-        // },
-      },
-      // ... other optional properties
-    });
+    // const azureProvider = new UserPoolIdentityProviderOidc(this, 'AzureProvider', {
+    //   clientId: azureClientId,
+    //   clientSecret: azureClientSecret,
+    //   issuerUrl: azureIssuerUrl,
+    //   userPool: userPool,
+    //   attributeMapping: {
+    //     // email: ProviderAttribute.fromString('email'),
+    //     // fullname: ProviderAttribute.fromString('name'),
+    //     // custom: {
+    //     //   customKey: providerAttribute,
+    //     // },
+    //   },
+    //   // ... other optional properties
+    // });
 
     
     const userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
-      userPool,
-      supportedIdentityProviders: [UserPoolClientIdentityProvider.custom(azureProvider.providerName)],
+      userPool,      
+      // supportedIdentityProviders: [UserPoolClientIdentityProvider.custom(azureProvider.providerName)],
     });
-
-    userPoolClient.node.addDependency(azureProvider);
+    
+    // userPoolClient.node.addDependency(azureProvider);
+    
   }
 }

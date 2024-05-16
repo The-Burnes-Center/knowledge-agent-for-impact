@@ -8,7 +8,7 @@ import { ChatBotApi } from "../chatbot-api";
 import { NagSuppressions } from "cdk-nag";
 
 
-export interface PublicWebsiteProps {  
+export interface WebsiteProps {  
   readonly userPoolId: string;
   readonly userPoolClientId: string;
   readonly identityPool: cognitoIdentityPool.IdentityPool;
@@ -19,10 +19,10 @@ export interface PublicWebsiteProps {
   readonly websiteBucket: s3.Bucket;
 }
 
-export class PublicWebsite extends Construct {
+export class Website extends Construct {
     readonly distribution: cf.CloudFrontWebDistribution;
 
-  constructor(scope: Construct, id: string, props: PublicWebsiteProps) {
+  constructor(scope: Construct, id: string, props: WebsiteProps) {
     super(scope, id);
 
     /////////////////////////////////////

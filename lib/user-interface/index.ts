@@ -10,12 +10,8 @@ import {
   execSync,
 } from "node:child_process";
 import * as path from "node:path";
-import { Shared } from "../shared";
-import { SystemConfig } from "../shared/types";
-import { Utils } from "../shared/utils";
 import { ChatBotApi } from "../chatbot-api";
-import { PrivateWebsite } from "./private-website"
-import { PublicWebsite } from "./public-website"
+import { Website } from "./generate-app"
 import { NagSuppressions } from "cdk-nag";
 
 export interface UserInterfaceProps {
@@ -60,12 +56,8 @@ export class UserInterface extends Construct {
     let websocketEndpoint: string;
     let distribution;
     
-    if (props.config.privateWebsite) {
-      const privateWebsite = new PrivateWebsite(this, "PrivateWebsite", {...props, websiteBucket: websiteBucket });
-    } else {
-      const publicWebsite = new PublicWebsite(this, "PublicWebsite", {...props, websiteBucket: websiteBucket });
-      distribution = publicWebsite.distribution
-    }
+    const publicWebsite = new Website(this, "Website", {...props, websiteBucket: websiteBucket });
+    distribution = publicWebsite.distribution
 
       
 
