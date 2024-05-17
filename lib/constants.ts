@@ -8,3 +8,5 @@ export const cognitoDomainName = "genaimvp-auth"
 // this can be anything that would be understood easily, but you must use the same name
 // when setting up a sign-in provider in Cognito
 export const OIDCIntegrationName = "Azure-OIDC"
+// this MUST be unique to your account
+export const stackName = "GenAiChatStack"
