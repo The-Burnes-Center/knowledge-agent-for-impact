@@ -95,8 +95,11 @@ export class ChatBotApi extends Construct {
       authorizer: httpAuthorizer,
     })
 
+    // SESSION_HANDLER
+    // lambdaFunctions.chatFunction.addEnvironment(
+    //   "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-session")
     lambdaFunctions.chatFunction.addEnvironment(
-      "mvp_user_session_handler_api_gateway_endpoint", restBackend.restAPI.apiEndpoint + "/user-session")
+      "SESSION_HANDLER", lambdaFunctions.sessionFunction.functionName)
     
 
     const feedbackAPIIntegration = new HttpLambdaIntegration('FeedbackAPIIntegration', lambdaFunctions.feedbackFunction);

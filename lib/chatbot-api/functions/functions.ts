@@ -29,40 +29,7 @@ export class LambdaFunctionStack extends cdk.Stack {
   public readonly syncKendraFunction : lambda.Function;
 
   constructor(scope: Construct, id: string, props: LambdaFunctionStackProps) {
-    super(scope, id);
-
-    // Define the Lambda function resource
-    const websocketAPIFunction = new lambda.Function(scope, 'ChatHandlerFunction', {
-      runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
-      code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
-      handler: 'index.handler', // Points to the 'hello' file in the lambda directory
-      environment : {
-        "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint.replace("wss","https"),
-        "INDEX_ID" : props.kendraIndex.attrId
-      },
-      timeout: cdk.Duration.seconds(300)
-    });
-    websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'bedrock:InvokeModelWithResponseStream',
-        'bedrock:InvokeModel'
-      ],
-      resources: ["*"]
-    }));
-    websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        'kendra:Retrieve'
-      ],
-      resources: [props.kendraIndex.attrArn]
-    }));
-    
-
-  
-    this.chatFunction = websocketAPIFunction;
-
-    
+    super(scope, id);    
 
     const sessionAPIHandlerFunction = new lambda.Function(scope, 'SessionHandlerFunction', {
       runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
@@ -86,7 +53,45 @@ export class LambdaFunctionStack extends cdk.Stack {
       ],
       resources: [props.sessionTable.tableArn, props.sessionTable.tableArn + "/index/*"]
     }));
+
     this.sessionFunction = sessionAPIHandlerFunction;
+
+        // Define the Lambda function resource
+        const websocketAPIFunction = new lambda.Function(scope, 'ChatHandlerFunction', {
+          runtime: lambda.Runtime.NODEJS_20_X, // Choose any supported Node.js runtime
+          code: lambda.Code.fromAsset(path.join(__dirname, 'websocket-chat')), // Points to the lambda directory
+          handler: 'index.handler', // Points to the 'hello' file in the lambda directory
+          environment : {
+            "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint.replace("wss","https"),
+            "INDEX_ID" : props.kendraIndex.attrId
+          },
+          timeout: cdk.Duration.seconds(300)
+        });
+        websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'bedrock:InvokeModelWithResponseStream',
+            'bedrock:InvokeModel'
+          ],
+          resources: ["*"]
+        }));
+        websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'kendra:Retrieve'
+          ],
+          resources: [props.kendraIndex.attrArn]
+        }));
+
+        websocketAPIFunction.addToRolePolicy(new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: [
+            'lambda:InvokeFunction'
+          ],
+          resources: [this.sessionFunction.functionArn]
+        }));
+        
+        this.chatFunction = websocketAPIFunction;
 
     const feedbackAPIHandlerFunction = new lambda.Function(scope, 'FeedbackHandlerFunction', {
       runtime: lambda.Runtime.PYTHON_3_12, // Choose any supported Node.js runtime
