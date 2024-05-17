@@ -59,7 +59,7 @@ export class ChatBotApi extends Construct {
         knowledgeBucket: buckets.kendraBucket
       })
 
-    const wsAuthorizer = new WebSocketLambdaAuthorizer('WebSocketAuthorizer', props.authentication.lambdaAuthorizer);
+    const wsAuthorizer = new WebSocketLambdaAuthorizer('WebSocketAuthorizer', props.authentication.lambdaAuthorizer, props : {identitySource: ['route.request.querystring.Authorization']});
 
     websocketBackend.wsAPI.addRoute('getChatbotResponse', {
       integration: new WebSocketLambdaIntegration('chatbotResponseIntegration', lambdaFunctions.chatFunction),
