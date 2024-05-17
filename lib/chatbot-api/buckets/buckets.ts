@@ -11,7 +11,7 @@ export class S3BucketStack extends cdk.Stack {
 
     // Create a new S3 bucket
     this.kendraBucket = new s3.Bucket(scope, 'KendraSourceBucket', {
-      bucketName: 'kendra-s3-source',
+      // bucketName: 'kendra-s3-source',
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -23,7 +23,7 @@ export class S3BucketStack extends cdk.Stack {
     });
 
     this.feedbackBucket = new s3.Bucket(scope, 'FeedbackDownloadBucket', {
-      bucketName: 'feedback-download',
+      // bucketName: 'feedback-download',
       versioned: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,

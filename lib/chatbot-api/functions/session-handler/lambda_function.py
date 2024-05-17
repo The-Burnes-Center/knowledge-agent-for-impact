@@ -181,7 +181,7 @@ def list_sessions_by_user_id(user_id):
         # Keep fetching until we have 15 items or there are no more items to fetch
         while len(items) < 15:
             response = table.query(
-                IndexName='user_id-time_stamp-index',  # Specify the secondary index to perform the query
+                IndexName='TimeIndex',  # Specify the secondary index to perform the query
                 ProjectionExpression='session_id, title, time_stamp',  # Limit the fields returned in the results
                 KeyConditionExpression="user_id = :user_id",  # Define the key condition for the query
                 ExpressionAttributeValues={":user_id": user_id},  # Bind the user_id value to the placeholder in KeyConditionExpression
