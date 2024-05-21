@@ -18,7 +18,7 @@ import { S3BucketStack } from "./buckets/buckets"
 
 import { WebSocketLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import { WebSocketLambdaAuthorizer, HttpUserPoolAuthorizer  } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
+import { WebSocketLambdaAuthorizer, HttpUserPoolAuthorizer, HttpJwtAuthorizer  } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { aws_apigatewayv2 as apigwv2 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
@@ -85,7 +85,9 @@ export class ChatBotApi extends Construct {
     websocketBackend.wsAPI.grantManageConnections(lambdaFunctions.chatFunction);
 
     
-    const httpAuthorizer = new HttpUserPoolAuthorizer('HTTPAuthorizer', props.authentication.userPool);
+    const httpAuthorizer = new HttpJwtAuthorizer('HTTPAuthorizer', props.authentication.userPool.userPoolProviderUrl,{
+      jwtAudience: [props.authentication.userPoolClient.userPoolClientId],
+    })
 
     const sessionAPIIntegration = new HttpLambdaIntegration('SessionAPIIntegration', lambdaFunctions.sessionFunction);
     restBackend.restAPI.addRoutes({
