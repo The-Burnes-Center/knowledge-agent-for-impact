@@ -53,9 +53,6 @@ export class KendraIndexStack extends cdk.Stack {
       })
     );
 
-    console.log(this.region)
-    console.log(this.account)
-
     kendraIndexRole.addToPolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
@@ -91,6 +88,15 @@ export class KendraIndexStack extends cdk.Stack {
         resources: [
           `arn:aws:s3:::${props.s3Bucket.bucketName}`,
           `arn:aws:s3:::${props.s3Bucket.bucketName}/*`,
+        ],
+      })
+    );
+
+    kendraDataSourceRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["kendra:BatchPutDocument", "kendra:BatchDeleteDocument"],
+        resources: [
+          index.attrArn
         ],
       })
     );
