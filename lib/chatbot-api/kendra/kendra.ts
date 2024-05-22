@@ -114,7 +114,7 @@ export class KendraIndexStack extends cdk.Stack {
         },
       }
     });
-
+    dataSource.addDependency(index);
     this.kendraIndex = index;
     this.kendraSource = dataSource;
   }
