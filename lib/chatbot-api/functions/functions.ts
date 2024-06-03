@@ -63,7 +63,8 @@ export class LambdaFunctionStack extends cdk.Stack {
           handler: 'index.handler', // Points to the 'hello' file in the lambda directory
           environment : {
             "mvp_websocket__api_endpoint_test" : props.wsApiEndpoint.replace("wss","https"),
-            "INDEX_ID" : props.kendraIndex.attrId
+            "INDEX_ID" : props.kendraIndex.attrId,
+            "PROMPT" : "You are a helpful AI chatbot that will answer questions based on your knowledge."
           },
           timeout: cdk.Duration.seconds(300)
         });

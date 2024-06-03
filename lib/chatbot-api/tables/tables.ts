@@ -36,6 +36,13 @@ export class TableStack extends Stack {
       partitionKey: { name: 'CreatedAt', type: AttributeType.STRING },
       projectionType: ProjectionType.ALL,
     });
+    
+    userFeedbackTable.addGlobalSecondaryIndex({
+      indexName: 'AnyIndex',
+      partitionKey: { name: 'Any', type: AttributeType.STRING },
+      sortKey: { name: 'CreatedAt', type: AttributeType.STRING },
+      projectionType: ProjectionType.ALL,
+    });
 
     this.feedbackTable = userFeedbackTable;    
   }
