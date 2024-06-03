@@ -54,7 +54,7 @@ def post_feedback(event):
             'Feedback': feedback_data["feedback"],
             'ChatbotMessage': feedback_data['completion'],
             'CreatedAt': timestamp,
-            'Any' : "YES"
+            'Any' : "YES"            
         }
         # Put the item into the DynamoDB table
         table.put_item(Item=item)
@@ -83,7 +83,7 @@ def download_feedback(event):
     topic = data.get('topic')
         
     response = None
-
+          
     if not topic or topic=="any":                
         query_kwargs = {
             'IndexName': 'AnyIndex',
@@ -93,6 +93,7 @@ def download_feedback(event):
         query_kwargs = {
             'KeyConditionExpression': Key('CreatedAt').between(start_time, end_time) & Key('Topic').eq(topic),            
         }   
+    response = table.query(**query_kwargs)
     response = table.query(**query_kwargs)
 
     print(query_kwargs)    
@@ -142,6 +143,10 @@ def get_feedback(event):
             query_kwargs['ExclusiveStartKey'] = json.loads(exclusive_start_key)
         
         if not topic or topic=="any":
+            # query_kwargs['IndexName'] = 'CreatedAtIndex'
+            # # query_kwargs['KeyConditionExpression'] = Key('CreatedAt').between(start_time, end_time)
+            # del query_kwargs['KeyConditionExpression']
+            # query_kwargs["FilterExpression"]=Attr('CreatedAt').between(start_time, end_time)
             # query_kwargs['IndexName'] = 'CreatedAtIndex'
             # # query_kwargs['KeyConditionExpression'] = Key('CreatedAt').between(start_time, end_time)
             # del query_kwargs['KeyConditionExpression']
