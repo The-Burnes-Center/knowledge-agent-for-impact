@@ -22,7 +22,7 @@ def add_session(session_id, user_id, chat_history, title, new_chat_entry):
                 'user_id': user_id,  # Identifier for the user
                 'session_id': session_id,  # Unique identifier for the session
                 'chat_history': [new_chat_entry],  # List of chat history, initiating with the new entry
-                "title": title,  # Title of the session
+                "title": title.strip(),  # Title of the session
                 "time_stamp": str(datetime.now())  # Current timestamp as a string
             }
         )
@@ -30,6 +30,7 @@ def add_session(session_id, user_id, chat_history, title, new_chat_entry):
         return response.get("Attributes", {})
     except ClientError as error:
         # Check for specific DynamoDB client errors
+        print("Caught error: DynamoDB error - could not add new session")
         if error.response["Error"]["Code"] == "ResourceNotFoundException":
             # Return an error message if the DynamoDB resource (e.g., table, item) is not found
             return {'statusCode': 404,
@@ -50,6 +51,7 @@ def get_session(session_id, user_id):
         # Attempt to retrieve an item using the session_id and user_id as keys
         response = table.get_item(Key={"session_id": session_id, "user_id": user_id})
     except ClientError as error:
+        print("Caught error: DynamoDB error - could not get session")
         # Handle specific error when the specified resource is not found in DynamoDB
         if error.response["Error"]["Code"] == "ResourceNotFoundException":
             # Return a 404 Not Found status code and message when the item is not found
@@ -106,6 +108,7 @@ def update_session(session_id, user_id, new_chat_entry):
             'body': response.get("Attributes", {})
         }
     except ClientError as error:
+        print("Caught error: DynamoDB error - could not update session")
         # Return a structured error message and status code
         error_code = error.response['Error']['Code']
         if error_code == "ResourceNotFoundException":
@@ -123,6 +126,7 @@ def update_session(session_id, user_id, new_chat_entry):
                 'body': 'Failed to update the session due to a database error.'
             }
     except Exception as general_error:
+        print("Caught error: DynamoDB error - could not update session")
         # Return a generic error response for unexpected errors
         return {
             'statusCode': 500,
@@ -135,8 +139,9 @@ def update_session(session_id, user_id, new_chat_entry):
 def delete_session(session_id, user_id):
     try:
         # Attempt to delete an item from the DynamoDB table based on the provided session_id and user_id.
-        table.delete_item(Key={"SessionId": session_id, "UserId": user_id})
+        table.delete_item(Key={"session_id": session_id, "user_id": user_id})
     except ClientError as error:
+        print("Caught error: DynamoDB error - could not delete session")
         # Handle specific DynamoDB client errors. If the item cannot be found or another error occurs, return the appropriate message.
         error_code = error.response['Error']['Code']
         if error_code == "ResourceNotFoundException":
@@ -172,21 +177,21 @@ def delete_user_sessions(user_id):
         return [{"error": str(error)}]
         
         
-def list_sessions_by_user_id(user_id):
+def list_sessions_by_user_id(user_id, limit = 15):
     items = []  # Initialize an empty list to store the fetched session items
 
     try:
         last_evaluated_key = None  # Initialize the key to control the pagination loop
 
         # Keep fetching until we have 15 items or there are no more items to fetch
-        while len(items) < 15:
+        while len(items) < limit:
             response = table.query(
                 IndexName='TimeIndex',  # Specify the secondary index to perform the query
                 ProjectionExpression='session_id, title, time_stamp',  # Limit the fields returned in the results
                 KeyConditionExpression="user_id = :user_id",  # Define the key condition for the query
                 ExpressionAttributeValues={":user_id": user_id},  # Bind the user_id value to the placeholder in KeyConditionExpression
                 ScanIndexForward=False,  # Sort the results in descending order by the sort key
-                Limit=15 - len(items),  # Dynamically adjust the query limit based on how many items we've already retrieved
+                Limit=limit - len(items),  # Dynamically adjust the query limit based on how many items we've already retrieved
             )
             items.extend(response.get("Items", []))  # Extend the items list with the newly fetched items
 
@@ -195,6 +200,7 @@ def list_sessions_by_user_id(user_id):
                 break
 
     except ClientError as error:
+        print("Caught error: DynamoDB error - could not list user sessions")
         # More detailed client error handling based on DynamoDB error codes
         error_code = error.response['Error']['Code']
         if error_code == "ResourceNotFoundException":
@@ -217,12 +223,14 @@ def list_sessions_by_user_id(user_id):
             'Access-Control-Allow-Origin': '*'  # CORS header allowing access from any domain
         }, 'body': "Internal server error"}
     except KeyError as key_error:
+        print("Caught error: DynamoDB error - could not list user sessions")
         # Handle errors that might occur if expected keys are missing in the response
         return {'statusCode': 500,
         'headers': {
             'Access-Control-Allow-Origin': '*'  # CORS header allowing access from any domain
         }, 'body': f"Key error: {str(key_error)}"}
     except Exception as general_error:
+        print("Caught error: DynamoDB error - could not list user sessions")
         # Generic error handling for any other unforeseen errors
         return {'statusCode': 500,
         'headers': {
@@ -231,6 +239,7 @@ def list_sessions_by_user_id(user_id):
 
     # Sort the items by 'time_stamp' in descending order to ensure the latest sessions appear first
     sorted_items = sorted(items, key=lambda x: x['time_stamp'], reverse=True)
+    sorted_items = list(map(lambda x: {"time_stamp" : x["time_stamp"], "session_id" : x["session_id"], "title" : x["title"].strip()},sorted_items))
 
     # Prepare the HTTP response object with a status code, headers, and body
     response = {
@@ -266,6 +275,8 @@ def lambda_handler(event, context):
         return update_session(session_id, user_id, new_chat_entry)
     elif operation == 'list_sessions_by_user_id':
         return list_sessions_by_user_id(user_id)
+    elif operation == 'list_all_sessions_by_user_id':
+        return list_sessions_by_user_id(user_id,limit=100)
     elif operation == 'delete_session':
         return delete_session(session_id, user_id)
     elif operation == 'delete_user_sessions':
@@ -279,4 +290,3 @@ def lambda_handler(event, context):
             'body': json.dumps(f'Operation not found/allowed! Operation Sent: {operation}')
         }
         return response
-    
