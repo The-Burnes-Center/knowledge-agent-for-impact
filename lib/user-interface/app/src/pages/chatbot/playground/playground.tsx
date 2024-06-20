@@ -2,33 +2,17 @@ import BaseAppLayout from "../../../components/base-app-layout";
 import Chat from "../../../components/chatbot/chat";
 
 import { Link, useParams } from "react-router-dom";
-import { Alert, Header, HelpPanel } from "@cloudscape-design/components";
-import EmailPanel from "../../../components/chatbot/email-panel"
-import { useState, useEffect, useRef } from "react";
-import { ChatBotHistoryItem } from "../../../components/chatbot/types";
+import { Header, HelpPanel } from "@cloudscape-design/components";
 
 export default function Playground() {
   const { sessionId } = useParams();
-  const [emailPanelShown, setEmailPanelShown] = useState<boolean>(false);
-  const [messageHistoryForEmail, setMessageHistoryForEmail] = useState<ChatBotHistoryItem[]>([]);
-  const [splitPanelOpen, setSplitPanelOpen] = useState<boolean>(false);
-  const firstRender = useRef(true);
 
-  useEffect(() => {
-    console.log("email history updated")
-    console.log(messageHistoryForEmail);
-    if (!firstRender.current) {
-      setSplitPanelOpen(true);
-    } else {
-      firstRender.current = false;
-    }    
-  },[messageHistoryForEmail])
   return (    
     <BaseAppLayout
       info={
         <HelpPanel header={<Header variant="h3">Using the chat</Header>}>
           <p>
-            This chatbot application allows users to ask questions about the RIDE, an MBTA
+            This is a customizable chatbot application
           </p>
           <h3>Settings</h3>
           <p>
@@ -48,22 +32,17 @@ export default function Playground() {
           </p>
           <h3>Session history</h3>
           <p>
-            All conversations are saved and can be later accessed via the{" "}
-            <Link to="/chatbot/sessions">Session</Link> in the navigation bar.
+            All conversations are saved and can be later accessed via {" "}
+            <Link to="/chatbot/sessions">Session</Link>.
           </p>
         </HelpPanel>
       }
-      toolsWidth={300}
-      splitPanelOpen={splitPanelOpen}
-      onSplitPanelToggle={({ detail }) =>
-        setSplitPanelOpen(detail.open)
-      }
-      splitPanel={<EmailPanel isHidden={false} messageHistory={messageHistoryForEmail}/>}
+      toolsWidth={300}       
       content={
        <div>
       {/* <Chat sessionId={sessionId} /> */}
       
-      <Chat sessionId={sessionId} updateEmailFunction={setMessageHistoryForEmail} />
+      <Chat sessionId={sessionId} />
       </div>
      }
     />    

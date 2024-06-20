@@ -34,9 +34,7 @@ import {feedbackCategories, feedbackTypes} from '../../common/constants'
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;  
   onThumbsUp: () => void;
-  onThumbsDown: (feedbackTopic : string, feedbackType : string, feedbackMessage: string) => void;
-  onSendEmail: () => void;
-  isLastMessage: boolean;
+  onThumbsDown: (feedbackTopic : string, feedbackType : string, feedbackMessage: string) => void;  
 }
 
 
@@ -126,11 +124,7 @@ export default function ChatMessage(props: ChatMessageProps) {
               <ButtonDropdown
               items={(props.message.metadata.Sources as any[]).map((item) => { return {id: "id", disabled: false, text : item.title, href : item.uri, external : true, externalIconAriaLabel: "(opens in new tab)"}})}
         
-              >Sources</ButtonDropdown>
-              {props.isLastMessage?
-              <Button onClick={() => {
-                   props.onSendEmail()
-                  }}>Generate Email</Button> : <></>}
+              >Sources</ButtonDropdown>              
               </SpaceBetween>
             )
           }
