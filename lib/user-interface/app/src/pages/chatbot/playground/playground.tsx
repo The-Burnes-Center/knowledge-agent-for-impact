@@ -12,28 +12,25 @@ export default function Playground() {
       info={
         <HelpPanel header={<Header variant="h3">Using the chat</Header>}>
           <p>
-            This is a customizable chatbot application
+            This is a customizable chatbot application capable of both answering general questions
+            as well as referencing custom documents in order to fit a specific business use-case.
           </p>
-          <h3>Settings</h3>
+          <h3>Feedback</h3>
           <p>
-            You can configure additional settings for the LLM via the setting
-            action at the bottom-right. You can change the Temperature and Top P
-            values to be used for the answer generation. You can also enable and
-            disable streaming mode for those models that support it (the setting
-            is ignored if the model does not support streaming). Turning on
-            Metadata displays additional information about the answer, such as
-            the prompts being used to interact with the LLM and the document
-            passages that might have been retrieved from the RAG storage.
+            You can submit feedback on every response. Negative feedback will consist of a category (depends on the use-case of the chatbot),
+            a type of issue, and some written comments. Admin users can view all feedback on a dedicated
+            page. Sources (if part of the original response) will be included with the feedback submission.
           </p>
-          <h3>Multimodal chat</h3>
+          <h3>Sources</h3>
           <p>
-            If you select a multimodal model (like Anthropic Claude 3), you can
-            upload images to use in the conversation.
+            If the chatbot references any files (uploaded by admin users), they will show up
+            underneath the relevant message. Admin users have access to a portal to add or delete
+            files. 
           </p>
           <h3>Session history</h3>
           <p>
             All conversations are saved and can be later accessed via {" "}
-            <Link to="/chatbot/sessions">Session</Link>.
+            <Link to="/chatbot/sessions">Sessions</Link>.
           </p>
         </HelpPanel>
       }
