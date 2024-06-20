@@ -25,7 +25,9 @@ export default function GlobalHeader() {
       }
 
       // const userName = result?.attributes?.email;
-      const userName = result?.signInUserSession?.idToken?.payload?.name;
+      const name = result?.signInUserSession?.idToken?.payload?.name;
+      const email = result?.signInUserSession?.idToken?.payload?.email
+      const userName = name? name : email;
       setUserName(userName);
     })();
   }, []);
@@ -55,13 +57,9 @@ export default function GlobalHeader() {
       <TopNavigation
         identity={{
           href: "/",
-          logo: { src: "/images/icon.png", alt: { CHATBOT_NAME } + " Logo" },
+          logo: { src: "/images/stateseal-color.png", alt:  CHATBOT_NAME  + " Logo" },
         }}
-        utilities={[
-          {
-            type: "button",
-            text: "for internal use only- testing stage",
-          },
+        utilities={[          
           {
             type: "button",
             text: theme === Mode.Dark ? "Light Mode" : "Dark Mode",

@@ -298,7 +298,7 @@ export default function FeedbackTab(props: FeedbackTabProps) {
                       setSelectedOption({ label: detail.selectedOption.label!, value: detail.selectedOption.value });
                     }}
                     placeholder="Choose a category"
-                    options={feedbackCategories}
+                    options={[...feedbackCategories, {label : "Any", value: "any", disabled: false}]}
                   />
                   <Button iconName="refresh" onClick={refreshPage} />
                   <Button
