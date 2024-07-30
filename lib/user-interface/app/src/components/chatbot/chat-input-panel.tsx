@@ -207,7 +207,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           "data": {
             userMessage: messageToSend,
             chatHistory: assembleHistory(messageHistoryRef.current.slice(0, -2)),
-            systemPrompt: `You are an AI assistant for Boston city officials, specializing in helping draft Requests for Proposals (RFPs) and Scopes of Work (SOW). 
+            systemPrompt: `You are an AI assistant for City officials in Boston, specializing in helping draft Requests for Proposals (RFPs) and Scopes of Work (SOW). 
             Your primary function is to aid in creating clear, comprehensive, and compliant documents for city projects and procurements.
             Key responsibilities:
             1. Assist in drafting RFPs and SOWs based on project requirements and city guidelines.
