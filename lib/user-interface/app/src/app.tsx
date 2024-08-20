@@ -24,7 +24,7 @@ function App() {
     <div style={{ height: "100%" }}>
       <Router>
         <GlobalHeader />
-        <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
+        <div style={{ height: "56px", backgroundColor: "#0C2639" }}>&nbsp;</div>
         <div>
           <Routes>            
             <Route
